@@ -1,5 +1,6 @@
 import './App.css';
 import { useState } from 'react';
+import { Table } from './components'
 
 const axios = require('axios')
 
@@ -9,6 +10,7 @@ const App = () => {
   const [axies, setAxies] = useState()
   const [data, setData] = useState()
   const [disable, setDisable] = useState(false)
+  const [jsonData, setJsonData] = useState([])
 
   const options = {
     headers: {
@@ -17,26 +19,38 @@ const App = () => {
     }
   }
 
-  const trackAxie = () => {
-    setDisable(true)
-    getAxies()
-    getData()
-    setDisable(false)
+  const index = jsonData.find(json => json.address === address)
+  
+  const trackAxie = async () => {
+    if(address.length !== 0) {
+      if(jsonData.indexOf(index) === -1) {
+        setJsonData(json => [...json, {
+          address,
+          axies: [],
+          data: []
+        }])
+      }
+      setDisable(true)
+      await getAxies()
+      await getData()
+      setDisable(false)
+    }
   }
-
-  const getAxies = () => {
+  
+  const getAxies = async () => {
     const formatAddress = address.includes('ronin') ? address.replace('ronin:', '0x') : address
-    axios.get(`https://axie-infinity.p.rapidapi.com/get-axies/${formatAddress}`, options)
+    await axios.get(`https://axie-infinity.p.rapidapi.com/get-axies/${formatAddress}`, options)
       .then(response => {
         setAxies(response.data)
       })
       .catch(error => {
         console.log(`error: ${error}`)
+        alert('api error, please try again')
       })
   }
 
-  const getData = () => {
-    axios.get(`https://game-api.axie.technology/api/v1/${address}`)
+  const getData = async () => {
+    await axios.get(`https://game-api.axie.technology/api/v1/${address}`)
     .then(response => {
       setData(response.data)
     })
@@ -47,41 +61,10 @@ const App = () => {
   
   return (
     <div className="App">
-      <input type='text' onChange={e => setAddress(e.target.value)} />
+      <input type='text' onChange={e => setAddress(e.target.value)} placeholder='address' />
       <button onClick={trackAxie} disabled={disable}>Add</button>
       <hr/>
-      <table role='grid'>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Address</th>
-            <th>MMR</th>
-            <th>Total SLP</th>
-            <th>Last claim</th>
-            <th>Next claim</th>
-            <th colSpan={3}>Axies</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            {
-              data && (
-                <>
-                  <td>{data.name}</td>
-                  <td>{address}</td>
-                  <td>{data.mmr}</td>
-                  <td>{data.total_slp}</td>
-                  <td>{new Date(data.last_claim * 1000).getMonth() + 1}/{new Date(data.last_claim * 1000).getDate()}/{new Date(data.last_claim * 1000).getFullYear()}</td>
-                  <td>{new Date(data.next_claim * 1000).getMonth() + 1}/{new Date(data.next_claim * 1000).getDate()}/{new Date(data.next_claim * 1000).getFullYear()}</td>
-                </>
-              )
-            }
-            {axies && axies?.data?.axies?.results?.map((axie, i) => (
-              <td key={i}>{axie.name}<img src={axie.image} alt='axie' style={{height:'100px'}} /></td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
+      <Table index={index} jsonData={jsonData} axies={axies} data={data} />
     </div>
   );
 }
