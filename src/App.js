@@ -11,7 +11,7 @@ const App = () => {
   const [data, setData] = useState()
   const [disable, setDisable] = useState(false)
   const [jsonData, setJsonData] = useState([])
-  const [total, setTotal] = useState({
+  const [total] = useState({
     scholars: 0,
     averageEarnings: 0,
     totalEarnings: 0
