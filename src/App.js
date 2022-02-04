@@ -1,6 +1,6 @@
 import './App.css';
 import { useState } from 'react';
-import { Table } from './components'
+import { Table, Total } from './components'
 
 const axios = require('axios')
 
@@ -11,6 +11,11 @@ const App = () => {
   const [data, setData] = useState()
   const [disable, setDisable] = useState(false)
   const [jsonData, setJsonData] = useState([])
+  const [total, setTotal] = useState({
+    scholars: 0,
+    averageEarnings: 0,
+    totalEarnings: 0
+  })
 
   const options = {
     headers: {
@@ -29,6 +34,7 @@ const App = () => {
           axies: [],
           data: []
         }])
+        total.scholars += 1
       }
       setDisable(true)
       await getAxies()
@@ -53,6 +59,13 @@ const App = () => {
     await axios.get(`https://game-api.axie.technology/api/v1/${address}`)
     .then(response => {
       setData(response.data)
+      if(jsonData.indexOf(index) === -1) {
+        //average earnings
+        total.averageEarnings += response.data.total_slp
+        total.averageEarnings /= total.scholars
+        //total earnings
+        total.totalEarnings += response.data.raw_total
+      }
     })
     .catch(error => {
       console.log(`error: ${error}`)
@@ -61,6 +74,7 @@ const App = () => {
   
   return (
     <div className="App">
+      <Total scholars={total.scholars} averageEarnings={total.averageEarnings} totalEarnings={total.totalEarnings}/>
       <input type='text' onChange={e => setAddress(e.target.value)} placeholder='address' />
       <button onClick={trackAxie} disabled={disable}>Add</button>
       <hr/>
